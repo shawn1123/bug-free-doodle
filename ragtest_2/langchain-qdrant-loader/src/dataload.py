@@ -31,11 +31,22 @@ def load_data_to_qdrant(file_paths, collection_name, qdrant_host="localhost", qd
     for file_path in file_paths:
         if file_path.endswith(".xlsx") or file_path.endswith(".xls"):
             # Process Excel files
-            df = pd.read_excel(file_path)
-            for index, row in df.iterrows():
-                text = " ".join(map(str, row.values))
-                vector = embeddings.embed(text)  # Generate vector using LangChain
-                points.append(PointStruct(id=index, vector=vector, payload={"text": text, "file_name": os.path.basename(file_path), "row_index": index}))
+            xls = pd.ExcelFile(file_path)
+            for sheet_name in xls.sheet_names:
+                df = pd.read_excel(xls, sheet_name=sheet_name)
+                for index, row in df.iterrows():
+                    text = " ".join(map(str, row.values))
+                    vector = embeddings.embed(text)  # Generate vector using LangChain
+                    points.append(PointStruct(
+                        id=len(points), 
+                        vector=vector, 
+                        payload={
+                            "text": text, 
+                            "file_name": os.path.basename(file_path), 
+                            "sheet_name": sheet_name, 
+                            "row_index": index
+                        }
+                    ))
 
         elif file_path.endswith(".docx"):
             # Process Word files
