@@ -1,0 +1,32 @@
+sequenceDiagram
+    %% Swimlanes
+    participant User
+    participant Frontend
+    participant RAG API/Router
+    participant Query Classifier
+    participant DB
+    participant Vector DB
+    participant LLM
+
+    %% User flow
+    User->>Frontend: Enter query
+    Frontend->>RAG API/Router: Send query
+
+    %% Decision making
+    RAG API/Router->>Query Classifier: Classify query type
+    Query Classifier-->>RAG API/Router: Return: [Structured] or [Unstructured]
+
+    alt Structured Query
+        RAG API/Router->>DB: Execute SQL/Structured Query
+        DB-->>RAG API/Router: Return result
+        RAG API/Router->>Frontend: Send DB response
+        Frontend-->>User: Show DB answer
+
+    else Unstructured (RAG path)
+        RAG API/Router->>Vector DB: Query with embedded vector
+        Vector DB-->>RAG API/Router: Return top-k documents
+        RAG API/Router->>LLM: Provide query + retrieved context
+        LLM-->>RAG API/Router: Return generated response
+        RAG API/Router->>Frontend: Send RAG answer
+        Frontend-->>User: Show RAG answer
+    end
